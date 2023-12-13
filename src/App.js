@@ -13,7 +13,8 @@ const UsersTable = () => {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [usersData, setUsersData] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
+// eslint-disable-next-line no-unused-vars
+const [selectedUser, setSelectedUser] = useState(null);
   const [registrationData, setRegistrationData] = useState({
     name: '',
     email: '',

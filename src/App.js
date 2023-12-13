@@ -4,7 +4,6 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, get, push, set, update } from 'firebase/database';
 import { firebaseConfig } from './Firebase';
 
-
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const usersRef = ref(database, 'users');
@@ -13,14 +12,12 @@ const UsersTable = () => {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [usersData, setUsersData] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-// eslint-disable-next-line no-unused-vars
-const [selectedUser, setSelectedUser] = useState(null);
   const [registrationData, setRegistrationData] = useState({
     name: '',
     email: '',
     password: '',
   });
-  
+
   const [loginData, setLoginData] = useState({
     email: '',
     password: '',
@@ -51,7 +48,7 @@ const [selectedUser, setSelectedUser] = useState(null);
       setSelectedUsers([...selectedUsers, userId]);
     }
   };
- 
+
   const handleSelectAll = () => {
     if (selectedUsers.length === usersData.length) {
       setSelectedUsers([]);
@@ -67,9 +64,14 @@ const [selectedUser, setSelectedUser] = useState(null);
         selectedUsers.includes(user.id) ? { ...user, status: 'Blocked' } : user
       );
       await set(ref(database, 'users'), updatedUsers);
+  
       setUsersData(updatedUsers);
+  
       setSelectedUsers([]);
-      handleLogout();
+  
+      if (selectedUsers.includes(loggedInUser.id)) {
+        handleLogout();
+      }
     } catch (error) {
       console.error('Error blocking users:', error.message);
     }
@@ -157,15 +159,24 @@ const [selectedUser, setSelectedUser] = useState(null);
       if (user.status === 'Blocked') {
         console.log('User is blocked. Cannot log in.');
       } else {
-        setLoggedInUser({ ...user, lastLogin: new Date().toISOString().slice(0, 10) });
-        setSelectedUser({ ...user, lastLogin: new Date().toISOString().slice(0, 10) });
+       
+        const lastLoginTime = new Date().toISOString().slice(0, 10);
+  
+        setLoggedInUser({ ...user, lastLogin: lastLoginTime });
+  
         console.log('Logged in as:', user.name);
+
+        const updatedUsers = usersData.map((u) =>
+          u.id === user.id ? { ...u, lastLogin: lastLoginTime } : u
+        );
+        setUsersData(updatedUsers);
+        set(ref(database, 'users'), updatedUsers);
       }
     } else {
       console.log('User not found');
     }
   };
-
+  
   const handleLogout = () => {
     setLoggedInUser(null);
     setSelectedUsers([]);
@@ -174,11 +185,11 @@ const [selectedUser, setSelectedUser] = useState(null);
 
   return (
     <div>
-     {loggedInUser ? (
-  <div>
-    <div className="welcome-message">
-      <h3>Hello, {loggedInUser.name}!</h3>
-    </div>
+      {loggedInUser ? (
+        <div>
+          <div className="welcome-message">
+            <h3>Hello, {loggedInUser.name}!</h3>
+          </div>
           <button className="btn btn-secondary" onClick={handleLogout}>
             Logout
           </button>
@@ -196,9 +207,9 @@ const [selectedUser, setSelectedUser] = useState(null);
           <table className="table">
             <thead>
               <tr>
-              <th scope="col">
-  <input type="checkbox" onChange={handleSelectAll} />
-</th>
+                <th scope="col">
+                  <input type="checkbox" onChange={handleSelectAll} />
+                </th>
                 <th scope="col">ID</th>
                 <th scope="col">Name</th>
                 <th scope="col">Email</th>
@@ -221,7 +232,7 @@ const [selectedUser, setSelectedUser] = useState(null);
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td>{user.registrationDate}</td>
-                  <td>{loggedInUser.lastLogin}</td>
+                  <td>{user.lastLogin}</td>
                   <td>{user.status}</td>
                 </tr>
               ))}
